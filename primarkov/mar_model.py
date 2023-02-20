@@ -58,6 +58,7 @@ class MarkovModel:
         trajectory_array = trajectory1.usable_simple_sequence
         markov_matrix = np.zeros((state_number, state_number))
         trajectory_length = trajectory_array.size
+        print("transition probability of ", trajectory_array)
         for markov_transform_start in range(trajectory_length - 1):
             this_step_start_state = trajectory_array[markov_transform_start]
             this_step_end_state = trajectory_array[markov_transform_start + 1]
@@ -165,6 +166,7 @@ class MarkovModel:
                     state_next = sequence[next_step_index]
                 if_sensitive = self.guidepost_indicator[state_now]
                 if if_sensitive:
+                    print("this state", state_now)
                     guidepost_index = self.index_dict[state_now]
                     guidepost1 = self.guidepost_set[guidepost_index]
                     guidepost1.guidepost_add(state_previous, state_next, trajectory_length)
@@ -185,6 +187,7 @@ class MarkovModel:
 
     #
     def get_noisy_tran_pro_of_step_i(self, step_i):
+#         print(step_i, "next prob", self.noisy_markov_matrix[step_i, :])
         pro = self.noisy_markov_matrix[step_i, :]
         return pro.copy()
 
@@ -210,9 +213,11 @@ class MarkovModel:
         optimized_distribution = sec1.distribution_calibration(self.grid, self.noisy_markov_matrix, self.large_trans_indicator)
         inner_start_index_to_usable = sec1.non_zero_start_indices
         inner_end_index_to_usable = sec1.non_zero_end_indices
+        print(optimized_distribution)
         optimized_start_distribution = np.sum(optimized_distribution, axis=1)
         optimized_end_distribution = np.sum(optimized_distribution, axis=0)
         self.noisy_markov_matrix[-2, inner_start_index_to_usable] = optimized_start_distribution
+        print("a", optimized_start_distribution)
         self.noisy_markov_matrix[inner_end_index_to_usable, -1] = self.noisy_markov_matrix[inner_end_index_to_usable, -1] * 1.3
         self.optimized_start_end_distribution = np.zeros(
             (self.grid.usable_state_number, self.grid.usable_state_number))

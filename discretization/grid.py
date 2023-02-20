@@ -238,7 +238,13 @@ class Grid:
         y_extend = extend_ratio1 * (north1 - south1)
         south1 = south1 - y_extend
         north1 = north1 + y_extend
-        border_1 = np.array([north1, south1, west1, east1])
+#         border_1 = np.array([north1, south1, west1, east1])
+        border_1 = np.array([140.5, 139, 35.3, 36])
+        print("HARD BORDER", border_1)
+    
+#             "lat_range":[35.3, 36],
+#             "lon_range":[139, 140.5],
+        
         self.give_border(border_1, direction1='all')
 
     # this function get point number of the whole dataset
@@ -255,7 +261,10 @@ class Grid:
         border2 = self.get_border('all')
         divide1 = Divide(self.cc)
 
+        print(total_point_number2, self.trajectory_number)
+        print("border:", border2)
         divide_parameter1 = divide1.level1_divide_parameter(total_point_number2, self.trajectory_number, border2)
+        print("divide_parameter1", divide_parameter1)
         return divide_parameter1[0]
 
     # this function perform a level1 dividing, divide full
@@ -267,9 +276,11 @@ class Grid:
         x_divide_number = divide_parameter
         y_start = self.get_border('s')
         y_end = self.get_border('n')
+        print(x_start, x_end, y_start, y_end)
         y_divide_number = divide_parameter
         x_divide_bins = tool1.get_bin(x_start, x_end, x_divide_number)
         y_divide_bins = tool1.get_bin(y_start, y_end, y_divide_number)
+        print("bins", x_divide_bins)
         self.level1_x_divide_parameter = x_divide_number
         self.level1_y_divide_parameter = y_divide_number
         self.give_x_divide_bins(x_divide_bins)
@@ -395,7 +406,9 @@ class Grid:
         noisy_density = self.get_level1_noisy_density()
         level1_cell_number = noisy_density.size
         subdividing_parameter = np.zeros(level1_cell_number, dtype=int) + 1
-        threshold = self.subdividing_threshold()
+#         threshold = self.subdividing_threshold()
+        threshold = 1e+20
+        print("WITHOUT SUBDIVIDE")
         level1_cell_need_to_subdivide = noisy_density > threshold
         for cell_index in range(noisy_density.size):
             if level1_cell_need_to_subdivide[cell_index]:

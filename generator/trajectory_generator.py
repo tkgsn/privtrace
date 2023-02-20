@@ -65,6 +65,7 @@ class Generator:
         all_state = mar_m.all_state_number
         states = np.arange(all_state)
         probability = mar_m.get_noisy_tran_pro_of_step_i(this_step)
+#         print(states, probability)
         if return_probability:
             return probability
         if step_now == 0:
@@ -85,13 +86,18 @@ class Generator:
         guide_post_indicator = mar_m.guidepost_indicator
         guidepost_used_actually = True
         use_guidepost = False
+        
+#         print("guide post indicator", guide_post_indicator)
 
         if guide_post_indicator[this_step]:
             use_guidepost = True
         if use_guidepost:
             guide_post_index = mar_m.index_dict[this_step]
+#             print("guide post index of", this_step, guide_post_index)
             gp1 = mar_m.guidepost_set[guide_post_index]
             next_step = gp1.choose_direction(last_step, step_number_now, return_probability=return_probability)
+            next_step = np.nan_to_num(next_step, nan=0)
+#             print('order2', last_step, this_step, next_step)
             if np.sum(next_step) == 0:
                 next_step = self.generate_no_gp_step(this_step, step_number_now, return_probability=return_probability)
         else:
@@ -208,6 +214,7 @@ class Generator:
         inner_step_in_this_large_cell = 1
         this_large_cell_inner_trajectory = []
         to_filter = False
+#         print(this_step, end_state, real_end_state)
         while this_step != end_state:
             trajectory.append(this_step)
             step_number_now = len(trajectory)
@@ -236,12 +243,14 @@ class Generator:
                     filtered_time = filtered_time + 1
                     if self.keep_this_trajectory_with_level1_threshold(trajectory, level1_len_threshold,
                                                                        filtered_time) is False:
+                        print("stop A")
                         return False
             generating_result = self.end_neighbor_multiplied_next_step(trajectory, this_step, previous_step,
                                                                        step_number_now,
                                                                        level1_step_number, multilayer_neighbors,
                                                                        predicted_length)
             if generating_result is False:
+                print("false stop")
                 return False
             this_step = generating_result[0]
             this_step_guidepost_usage = generating_result[1]
@@ -257,7 +266,7 @@ class Generator:
                 if len(trajectory) > 100:
                     print('this trajectory generation cant stop')
                     return False
-            if len(trajectory) > 8:
+            if len(trajectory) > 10:
                 if self.avoid_lingering(np.array(trajectory)):
                     pass
                 else:
@@ -268,7 +277,10 @@ class Generator:
                     if neighbor_indicator is True:
                         pass
                     else:
+                        print("neighbor stop")
                         return False
+#             print(this_step)
+        print("generated", trajectory)
         if len(trajectory) == 0:
             return False
         trajectory = np.array(trajectory, dtype=int)
@@ -363,6 +375,7 @@ class Generator:
 
     def generate_many(self, number, neighbor_check=False):
         trajectory_list = []
+        print("neighbor check:", neighbor_check)
         if neighbor_check:
             trajectory_number_already = 0
             while trajectory_number_already < number:
@@ -375,9 +388,13 @@ class Generator:
             print('begin generating')
             print(datetime.datetime.now())
             while i < number + 1:
-                trajectory = self.generate_trajectory()
+#                 print(i)
+#                 trajectory = self.generate_trajectory()
+                trajectory = self.generate_trajectory(neighbor_check=neighbor_check)
                 if trajectory is not False:
                     trajectory_list.append(trajectory)
+                    i = i + 1
+                else:
                     i = i + 1
             print('end generating')
             print(datetime.datetime.now())

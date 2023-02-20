@@ -78,6 +78,7 @@ class StartEndCalibrator:
         gt1 = GeneralTools()
         self.setup_network(grid)
         self.large_trans_indicator = large_trans_indicator
+        print(noisy_matrix.shape, noisy_matrix)
         start_states_value = noisy_matrix[-2, :-2]
         end_states_value = noisy_matrix[:-2, -1]
         non_zero_start_values = start_states_value
@@ -347,6 +348,9 @@ class StartEndCalibrator:
         lengths = self.inner_indices_shortest_path_lengths
         lengths = lengths * self.large_trans_indicator
         lengths[lengths < 0.01] = 0.01
+        print('length', lengths)
+        print('start', self.non_zero_start_values)
+        print('end', self.non_zero_end_values)
         distribution = cp.Variable((self.non_zero_start_indices.size, self.non_zero_end_indices.size))
         start_error = cp.norm(cp.sum(cp.multiply(distribution, 1 / lengths), axis=1) - self.non_zero_start_values)
         end_error = cp.norm(cp.sum(cp.multiply(distribution, 1 / lengths), axis=0) - self.non_zero_end_values)
@@ -361,6 +365,7 @@ class StartEndCalibrator:
         finally:
             if distribution.value is None:
                 prob.solve(solver=cp.SCS)
+            print(distribution.value.sum())
             return distribution.value
 
     #
@@ -368,7 +373,8 @@ class StartEndCalibrator:
         non_divided_distribution = divided_distribution
         non_divided_distribution = \
             non_divided_distribution / np.sum(non_divided_distribution) * self.total_trajectory_number
-        non_divided_distribution[non_divided_distribution < 0.8] = 0
+#         non_divided_distribution[non_divided_distribution < 0.8] = 0
+        non_divided_distribution[non_divided_distribution < 0] = 0
         non_divided_distribution = \
             non_divided_distribution / np.sum(non_divided_distribution) * self.total_trajectory_number
         return non_divided_distribution
@@ -378,6 +384,7 @@ class StartEndCalibrator:
         cc = self.cc
         self.setup_calibrator(grid, noisy_matrix, large_trans_indicator)
         divided_distribution = self.distribution_optimization_cvxpy2()
+        print("divided_distribution", divided_distribution)
         iter_turns = 0
         while (divided_distribution is None) and (iter_turns < 10):
             divided_distribution = self.distribution_optimization_cvxpy2()
@@ -387,6 +394,7 @@ class StartEndCalibrator:
             divided_distribution = self.distribution_optimization_cvxpy2(loose_parameter=loose_multiplier ** 2)
             loose_multiplier = loose_multiplier + 1
         non_length_divided_distribution = self.optimized_non_length_divided_distribution(divided_distribution)
+        print("non_length", non_length_divided_distribution)
         return non_length_divided_distribution
 
     #

@@ -9,6 +9,7 @@ from config.parameter_setter import ParSetter
 from tools.data_writer import DataWriter
 from data_preparation.data_preparer import DataPreparer
 import datetime
+import pandas as pd
 
 if __name__ == "__main__":
     writer = DataWriter()
@@ -26,6 +27,10 @@ if __name__ == "__main__":
     mo1 = mb1.filter_model(trajectory_set, grid, mo1)
     sg1 = StateGeneration(pc)
     st_tra_list = sg1.generate_tra(mo1)
+    df = pd.DataFrame(st_tra_list)
+    df = df.fillna(10000).astype(int)
+#     df.to_csv("/data/trajGAN/results/peopleflow/peopleflow_dnum2000/privtrace.csv", header=None, index=None)
+    df.to_csv("/data/trajGAN/results/peopleflow/privtrace/privtrace_epsilon1.csv", header=None, index=None)
     rlt1 = RealLocationTranslator(pc)
     real_tra_list = rlt1.translate_trajectories(grid, st_tra_list)
     writer.save_trajectory_data_in_list_to_file(real_tra_list, fname.result_file_name)

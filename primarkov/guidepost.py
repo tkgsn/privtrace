@@ -37,6 +37,7 @@ class GuidePost:
 
     #
     def guidepost_add(self, last_step, next_step, trajectory_length):
+        print("add", last_step, self.this_state, next_step)
         if isinstance(last_step, str):
             if last_step == 'start':
                 self.add_start(next_step, trajectory_length)
@@ -69,6 +70,7 @@ class GuidePost:
         probability = self.order2_trans_matrix[inner_last, :]
         probability = probability.copy()
         probability = probability.astype(float)
+#         print("hi", inner_last, last_step, probability)
         if return_probability:
             return probability
         inner_result = gt1.draw_by_probability_without_an_element(candidates, probability, -2)
@@ -98,8 +100,9 @@ class GuidePost:
         noisy_matrix[:, self.start_state] = np.zeros(self.all_state_number)
         noisy_matrix[self.end_state, :] = np.zeros(self.all_state_number)
         noisy_matrix = noise1.positive_regulation_for_markov_matrix(noisy_matrix)
-        self.order2_trans_matrix = noisy_matrix.astype(np.int)
-
+#         print(noisy_matrix)
+        self.order2_trans_matrix = noisy_matrix.astype(np.float)
+#         print(self.order2_trans_matrix)
     #
     def give_total_ends_value(self):
         end_value = np.sum(self.order2_trans_matrix[:, -1])
