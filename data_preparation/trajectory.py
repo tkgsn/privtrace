@@ -11,7 +11,7 @@ class Trajectory:
         # calculate number of  points in a trajctory
         self.point_number = 0
         # define a list to store index of cells and subcells that points are in in the trajectory
-        self.trajectory_cell_list = np.array([], dtype=np.int)
+        self.trajectory_cell_list = np.array([], dtype=int)
         self.level1_cell_index_sequence = np.array([], dtype=int)
         self.level2_cell_index_sequence = np.array([], dtype=int)
         self.cell_sequence = np.array([], dtype=int)
@@ -73,9 +73,11 @@ class Trajectory:
         level2_cell_index_array = self.level2_cell_index_sequence
         unrepeated_sequence, frequency = self.calculate_unrepeated_trajectory(level2_cell_index_array)
         unrepeated_usable_sequence = dict1[unrepeated_sequence]
+        assert all(unrepeated_sequence == unrepeated_usable_sequence), 'how can this happen?'
         self.cell_sequence = unrepeated_sequence
         self.cell_sequence_frequency = frequency
         self.usable_simple_sequence = unrepeated_usable_sequence
+
 
     def calculate_unrepeated_trajectory(self, sequence: np.ndarray):
         gt1 = GeneralTools()

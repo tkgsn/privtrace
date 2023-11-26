@@ -62,7 +62,11 @@ class Filter:
     def degree_amount_sensitivity(self, matrix):
         matrix = matrix[0: -2, 0: -2]
         degree_amount_of_states = np.sum(matrix, axis=1)
-        amount_threshold = self.real_state_number * 1.414 / (self.cc.total_epsilon * self.cc.epsilon_partition[1])
+        # shun: we add the special vocab epsilon=0, which means no noise for test
+        if self.cc.total_epsilon == 0:
+            amount_threshold = 0
+        else:
+            amount_threshold = self.real_state_number * 1.414 / (self.cc.total_epsilon * self.cc.epsilon_partition[1])
         indicator = (degree_amount_of_states > amount_threshold)
         indicator = indicator[:self.real_state_number]
         return indicator

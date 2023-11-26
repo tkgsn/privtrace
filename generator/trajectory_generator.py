@@ -102,12 +102,13 @@ class Generator:
                 next_step = self.generate_no_gp_step(this_step, step_number_now, return_probability=return_probability)
         else:
             next_step = self.generate_no_gp_step(this_step, step_number_now, return_probability=return_probability)
+            # print(next_step, next_step.shape, next_step[this_step])
+            # assert next_step[this_step] == 0, f"next step should not be the same as this step {this_step}, prob= {next_step[this_step]}"
             guidepost_used_actually = False
         return next_step, guidepost_used_actually
 
     #
-    def generate_no_guidepost_one_step(self, this_step, step_number_now, neighbor_check=False,
-                                       return_probability=False):
+    def generate_no_guidepost_one_step(self, this_step, step_number_now, neighbor_check=False, return_probability=False):
         next_step = self.generate_no_gp_step(this_step, step_number_now, return_probability=return_probability)
         if return_probability:
             return next_step
@@ -143,7 +144,7 @@ class Generator:
         grid = self.markov_model.grid
         level1_state_number = grid.level1_cell_number
         level1_para = np.sqrt(level1_state_number)
-        threshold = np.int(np.floor(level1_para * 0.8))
+        threshold = int(np.floor(level1_para * 0.8))
         if threshold < 0:
             threshold = 0
         self.level1_length_threshold_value = threshold
@@ -152,7 +153,7 @@ class Generator:
         # grid = self.markov_model.grid
         average_subdividing_number = self.average_subdividing_number
         # whole_threshold = np.int(np.ceil(average_subdividing_number)) * 1.5
-        whole_threshold = np.int(np.ceil(average_subdividing_number))
+        whole_threshold = int(np.ceil(average_subdividing_number))
         if whole_threshold < level1_len_threshold:
             whole_threshold = level1_len_threshold
         self.simple_level2_length_threshold_value = whole_threshold
@@ -196,13 +197,18 @@ class Generator:
             thr = self.level1_length_threshold_value
         return thr
 
-    def generate_trajectory(self, neighbor_check=True):
+    # we add the argument start_privtrace_id for fair comparison
+    # this argument specifies the start privtrace id of the trajectory
+    def generate_trajectory(self, neighbor_check=True, start_privtrace_id=None):
         gt1 = GeneralTools()
         trajectory = []
         start_state = self.markov_model.start_state_index
         end_state = self.markov_model.end_state_index
         previous_step = start_state
-        this_step = self.generate_no_gp_step(start_state, 0)
+        if start_privtrace_id == None:
+            this_step = self.generate_no_gp_step(start_state, 0)
+        else:
+            this_step = start_privtrace_id
         tra_guidepost_usages = []
         # optimized distribution related step: real end state, revise to non optimization version
         real_end_state = self.choose_end(this_step)
@@ -214,7 +220,6 @@ class Generator:
         inner_step_in_this_large_cell = 1
         this_large_cell_inner_trajectory = []
         to_filter = False
-#         print(this_step, end_state, real_end_state)
         while this_step != end_state:
             trajectory.append(this_step)
             step_number_now = len(trajectory)
@@ -241,16 +246,15 @@ class Generator:
                 if inner_this_large_cell_step_ratio > 0.4:
                     to_filter = False
                     filtered_time = filtered_time + 1
-                    if self.keep_this_trajectory_with_level1_threshold(trajectory, level1_len_threshold,
-                                                                       filtered_time) is False:
-                        print("stop A")
+                    if self.keep_this_trajectory_with_level1_threshold(trajectory, level1_len_threshold, filtered_time) is False:
+                        # print("stop A")
                         return False
-            generating_result = self.end_neighbor_multiplied_next_step(trajectory, this_step, previous_step,
-                                                                       step_number_now,
-                                                                       level1_step_number, multilayer_neighbors,
-                                                                       predicted_length)
+            
+            # "neighbor_multiplied operation" includes many hard corded parameters
+            # don't know that this works well for our dataset, but we remain them for now
+            generating_result = self.end_neighbor_multiplied_next_step(trajectory, this_step, previous_step, step_number_now, level1_step_number, multilayer_neighbors, predicted_length)
             if generating_result is False:
-                print("false stop")
+                # print("false stop")
                 return False
             this_step = generating_result[0]
             this_step_guidepost_usage = generating_result[1]
@@ -260,19 +264,22 @@ class Generator:
             level1_step_number = gt1.level1_array_length(trajectory, grid)
             if level1_step_number <= 2:
                 if len(trajectory) > 200:
-                    print('this trajectory generation cant stop')
+                    # print('this trajectory generation cant stop')
                     return False
             else:
                 if len(trajectory) > 100:
-                    print('this trajectory generation cant stop')
+                    # print('this trajectory generation cant stop')
                     return False
             if len(trajectory) > 10:
                 if self.avoid_lingering(np.array(trajectory)):
                     pass
                 else:
+                    # print("a")
                     return False
             if neighbor_check:
-                if (this_step < end_state - 2) and (previous_step < end_state - 2):
+                # if (this_step < end_state - 2) and (previous_step < end_state - 2):
+                # what is this?
+                if (this_step < start_state) and (previous_step < start_state):
                     neighbor_indicator = self.check_large_neighbor(this_step, previous_step)
                     if neighbor_indicator is True:
                         pass
@@ -280,7 +287,7 @@ class Generator:
                         print("neighbor stop")
                         return False
 #             print(this_step)
-        print("generated", trajectory)
+        # print("generated", trajectory)
         if len(trajectory) == 0:
             return False
         trajectory = np.array(trajectory, dtype=int)
@@ -291,15 +298,14 @@ class Generator:
         start_state = self.markov_model.start_state_index
         end_state = self.markov_model.end_state_index
         this_step = self.generate_no_gp_step(start_state, 0)
-        real_end_state = self.choose_end(this_step)
+        # real_end_state = self.choose_end(this_step)
         multilayer_neighbors = self.get_multilayer_neighbors(real_end_state)
-        predicted_length = self.markov_model.calibrator.inner_indices_shortest_path_lengths[
-            this_step, real_end_state]
+        # predicted_length = self.markov_model.calibrator.inner_indices_shortest_path_lengths[
+            # this_step, real_end_state]
         while (this_step != end_state) and len(trajectory) < 700:
             trajectory.append(this_step)
             step_number_now = len(trajectory)
-            this_step = self.no_guidepost_next_step(trajectory, this_step, step_number_now, multilayer_neighbors,
-                                                    predicted_length)
+            this_step = self.no_guidepost_next_step(trajectory, this_step, step_number_now, multilayer_neighbors, predicted_length)
         if len(trajectory) == 0:
             # raise ValueError('this trajectory should not be empty')
             return False
@@ -328,13 +334,11 @@ class Generator:
         else:
             return False
 
-    def end_neighbor_multiplied_next_step(self, trajectory, this_step, previous_step, step_number_now,
-                                          level1_step_number, multilayer_neighbors, predicted_length):
+    def end_neighbor_multiplied_next_step(self, trajectory, this_step, previous_step, step_number_now, level1_step_number, multilayer_neighbors, predicted_length):
         gt1 = GeneralTools()
         cc1 = self.cc
         grid = self.markov_model.grid
-        generating_result = self.generate_one_step(this_step, previous_step, step_number_now,
-                                                   return_probability=True)
+        generating_result = self.generate_one_step(this_step, previous_step, step_number_now, return_probability=True)
         probability = generating_result[0]
         this_time_guidepost_usage = generating_result[1]
         candidates = np.arange(self.markov_model.noisy_markov_matrix.shape[0])
@@ -343,16 +347,20 @@ class Generator:
             if len(trajectory) < predicted_length * 0.5:
                 probability[-1] = probability[-1] * 0.2
         probability[-1] = probability[-1] * 0.8
-        if np.sum(probability) <= 0:
+        if np.sum(probability) == 0:
+            # in this case, we choose a neighbor randomly according to the degree
             neighbors_of_this_step = grid.subcell_neighbors_usable_index[this_step]
             weights = self.total_in_degree[neighbors_of_this_step]
             if np.sum(weights) == 0:
-                this_step1 = np.int(gt1.random_pick_element(neighbors_of_this_step))
+                this_step1 = int(gt1.random_pick_element(neighbors_of_this_step))
             else:
-                this_step1 = np.int(np.random.choice(neighbors_of_this_step, p=weights / np.sum(weights)))
+                this_step1 = int(np.random.choice(neighbors_of_this_step, p=weights / np.sum(weights)))
+        elif np.sum(probability) < 0:
+            raise ValueError('probability should not be negative')
         else:
-            this_step1 = gt1.draw_by_probability_without_an_element(candidates, probability, -2)
-        pass
+            # we add this_step to elements to be excluded because the trajectory should not have the same step twice
+            this_step1 = gt1.draw_by_probability_without_an_element(candidates, probability, [-2, this_step])
+            # this_step1 = gt1.draw_by_probability_without_an_element(candidates, probability, -2)
         return this_step1, this_time_guidepost_usage
 
     #

@@ -215,35 +215,35 @@ class Grid:
         return self.level2_y_bin_dict[index]
 
     def border(self, trajectory_set1: TrajectorySet) -> None:
-        extend_ratio1 = self.get_extend_ratio()
-        south1 = 1000000000
-        north1 = -1000000000
-        west1 = 1000000000
-        east1 = -1000000000
-        trajectory_number = trajectory_set1.trajectory_number
-        for trajectory_index in range(trajectory_number):
-            trajectory1 = trajectory_set1.give_trajectory_by_index(trajectory_index)
-            arr = trajectory1.trajectory_array
-            if west1 > np.amin(arr[:, 0]):
-                west1 = np.amin(arr[:, 0])
-            if east1 < np.amax(arr[:, 0]):
-                east1 = np.max(arr[:, 0])
-            if south1 > np.amin(arr[:, 1]):
-                south1 = np.amin(arr[:, 1])
-            if north1 < np.amax(arr[:, 1]):
-                north1 = np.amax(arr[:, 1])
-        x_extend = extend_ratio1 * (east1 - west1)
-        west1 = west1 - x_extend
-        east1 = east1 + x_extend
-        y_extend = extend_ratio1 * (north1 - south1)
-        south1 = south1 - y_extend
-        north1 = north1 + y_extend
-#         border_1 = np.array([north1, south1, west1, east1])
-        border_1 = np.array([140.5, 139, 35.3, 36])
-        print("HARD BORDER", border_1)
-    
-#             "lat_range":[35.3, 36],
-#             "lon_range":[139, 140.5],
+        # extend_ratio1 = self.get_extend_ratio()
+        # south1 = 1000000000
+        # north1 = -1000000000
+        # west1 = 1000000000
+        # east1 = -1000000000
+        # trajectory_number = trajectory_set1.trajectory_number
+        # for trajectory_index in range(trajectory_number):
+        #     # print(trajectory_index)
+        #     trajectory1 = trajectory_set1.give_trajectory_by_index(trajectory_index)
+        #     # print(trajectory1.trajectory_array)
+        #     arr = trajectory1.trajectory_array
+        #     if west1 > np.amin(arr[:, 0]):
+        #         west1 = np.amin(arr[:, 0])
+        #     if east1 < np.amax(arr[:, 0]):
+        #         east1 = np.max(arr[:, 0])
+        #     if south1 > np.amin(arr[:, 1]):
+        #         south1 = np.amin(arr[:, 1])
+        #     if north1 < np.amax(arr[:, 1]):
+        #         north1 = np.amax(arr[:, 1])
+        # x_extend = extend_ratio1 * (east1 - west1)
+        # west1 = west1 - x_extend
+        # east1 = east1 + x_extend
+        # y_extend = extend_ratio1 * (north1 - south1)
+        # south1 = south1 - y_extend
+        # north1 = north1 + y_extend
+        # border_1 = np.array([north1, south1, west1, east1])
+        # border_1 = [n, s, w, e]
+        border_1 = np.array([max(self.cc.lat_range), min(self.cc.lat_range), min(self.cc.lon_range), max(self.cc.lon_range)])
+        print("border", border_1)
         
         self.give_border(border_1, direction1='all')
 
@@ -262,7 +262,6 @@ class Grid:
         divide1 = Divide(self.cc)
 
         print(total_point_number2, self.trajectory_number)
-        print("border:", border2)
         divide_parameter1 = divide1.level1_divide_parameter(total_point_number2, self.trajectory_number, border2)
         print("divide_parameter1", divide_parameter1)
         return divide_parameter1[0]
@@ -348,13 +347,13 @@ class Grid:
             self.level1_trajectory_point_to_cell(trajectory1)
 
     # this function transforms point array in a single trajectory into cell index array
-    def level1_trajectory_point_to_cell(self, trajectory1: Trajectory,
-                                        illegal_index_process_method: str = 'error') -> None:
+    def level1_trajectory_point_to_cell(self, trajectory1: Trajectory, illegal_index_process_method: str = 'error') -> None:
         general_tool1 = GeneralTools()
         point_array = trajectory1.get_trajectory_list()
         x_bin = self.get_x_divide_bins()
         y_bin = self.get_y_divide_bins()
         level1_cell_index = general_tool1.get_points_bin_index(point_array, x_bin, y_bin)
+        # print("h", level1_cell_index)
         self.illegal_index_process(level1_cell_index, illegal_index_process_method)
         cell_index_array = self.get_trajectory_point_level1_index(level1_cell_index[:, 1], level1_cell_index[:, 0])
         trajectory1.give_level1_index_array(cell_index_array)
@@ -362,6 +361,7 @@ class Grid:
     # this function processes illegal index i.e. index out of bins
     # if processing type is 'error', then when the array is illegal, raise an error
     def illegal_index_process(self, index_array: np.ndarray, processing_type: str) -> None:
+        # print(index_array)
         illegal_x_point = index_array[:, 0] < 0
         illegal_y_point = index_array[:, 1] < 0
         if processing_type == 'error':
@@ -406,10 +406,12 @@ class Grid:
         noisy_density = self.get_level1_noisy_density()
         level1_cell_number = noisy_density.size
         subdividing_parameter = np.zeros(level1_cell_number, dtype=int) + 1
-#         threshold = self.subdividing_threshold()
-        threshold = 1e+20
-        print("WITHOUT SUBDIVIDE")
+        threshold = self.subdividing_threshold()
+        print("threshold for level 2 dividing", threshold)
+        # threshold = 1e+20
+        # print("WITHOUT SUBDIVIDE")
         level1_cell_need_to_subdivide = noisy_density > threshold
+        print(f"{sum(level1_cell_need_to_subdivide)} locations will be divied")
         for cell_index in range(noisy_density.size):
             if level1_cell_need_to_subdivide[cell_index]:
                 subdividing_number = self.subdividing_number(noisy_density[cell_index])
@@ -432,6 +434,11 @@ class Grid:
         big_cell_e = big_cell_border[3]
         this_cell_x_bin = general_tool1.get_bin(big_cell_w, big_cell_e, this_cell_subdividing_parameter)
         this_cell_y_bin = general_tool1.get_bin(big_cell_s, big_cell_n, this_cell_subdividing_parameter)
+        if this_cell_subdividing_parameter != 1:
+            print("this_cell_subdividing_parameter", this_cell_subdividing_parameter)
+            print("level1_cell_index", level1_cell_index)
+            print("this_cell_x_bin", this_cell_x_bin)
+            print("this_cell_y_bin", this_cell_y_bin)
         self.add_level2_subdividing_x_bin(this_cell_x_bin)
         self.add_level2_subdividing_y_bin(this_cell_y_bin)
 
@@ -451,18 +458,17 @@ class Grid:
         subdividing_parameter = self.get_level2_parameter()
         subdividing_cell_number = subdividing_parameter ** 2
         cell_number = np.sum(subdividing_cell_number)
-        cell_number = np.int(cell_number)
+        cell_number = int(cell_number)
         self.initializing_subdividing_parameter(cell_number)
         subcell_index = 0
+        print("subdividing_parameter", subdividing_parameter)
         for level1_cell_index in range(subdividing_parameter.size):
             this_cell_subdividing_parameter = subdividing_parameter[level1_cell_index]
             self.subdividing_bins(level1_cell_index, this_cell_subdividing_parameter)
             for subcell_inner_x_index in range(this_cell_subdividing_parameter):
                 for subcell_inner_y_index in range(this_cell_subdividing_parameter):
-                    self.give_subcell_border(level1_cell_index, subcell_index, subcell_inner_x_index,
-                                             subcell_inner_y_index)
-                    self.give_level2_position_by_index(subcell_index, level1_cell_index, subcell_inner_x_index,
-                                                       subcell_inner_y_index)
+                    self.give_subcell_border(level1_cell_index, subcell_index, subcell_inner_x_index, subcell_inner_y_index)
+                    self.give_level2_position_by_index(subcell_index, level1_cell_index, subcell_inner_x_index, subcell_inner_y_index)
                     subcell_index = subcell_index + 1
         self.level2_position_to_index_dict()
         self.give_level2_subcell_to_large_cell_dict()
@@ -491,6 +497,7 @@ class Grid:
 
     # this function gives subcell number
     def give_subcell_number(self):
+        # print("level2_index_position_dict", self.level2_index_position_dict)
         self.subcell_number = self.level2_index_position_dict.shape[0]
 
     # this function gives all subcell neighbors
@@ -812,8 +819,11 @@ class Grid:
     def calculate_index_array_for_trajectory(self, trajectory1: Trajectory):
         point_array = trajectory1.get_trajectory_list()
         level1_array = trajectory1.get_level1_index_array()
-        x_point_array = point_array[:, 0]
-        y_point_array = point_array[:, 1]
+        # x_point_array = point_array[:, 0]
+        # y_point_array = point_array[:, 1]
+        # our point is (lat, lon)
+        x_point_array = point_array[:, 1]
+        y_point_array = point_array[:, 0]
         index_array = self.calculate_index_array_by_point_array(x_point_array, y_point_array, level1_array)
         trajectory1.level2_cell_index_sequence = index_array
 
@@ -840,10 +850,14 @@ class Grid:
         return density
 
     def state_pruning(self) -> None:
+        print("self.subcell_number", self.subcell_number)
         usable_indicator = np.ones(self.subcell_number, dtype=bool)
         usable_number = int(np.sum(usable_indicator))
         real_to_usable = np.zeros(self.subcell_number, dtype=int) - 1
         real_to_usable[usable_indicator] = np.arange(usable_number)
+        print("real_to_usable", real_to_usable)
+        # what is the difference between range(self.subcell_number) and real_to_usable?
+        # this means that real_to_usable is the list of subcell ids...?
         self.real_subcell_index_to_usable_index_dict = real_to_usable
         self.usable_to_real_dict(usable_number, real_to_usable)
         self.usable_state_number = usable_number
@@ -863,10 +877,13 @@ class Grid:
     def usable_array_of_trajectory(self, trajectory1: Trajectory) -> None:
         index_array = trajectory1.level2_cell_index_sequence
         usable_index = self.real_subcell_index_to_usable_index_dict[index_array]
+        # always same
+        assert all(index_array == usable_index)
         has_not_usable = (usable_index < 0).any()
         if not has_not_usable:
             trajectory1.usable_sequence = usable_index
         else:
+            assert False, "how can you reach here??"
             trajectory1.has_not_usable_index = True
 
     #

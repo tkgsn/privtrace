@@ -32,7 +32,7 @@ class RealLocationTranslator:
             state = state_sequence[index_of_states]
             borders = all_level2_state_borders[state]
             location = self.sample_from_a_subcell(borders)
-            print(state, borders, location)
+            # print(state, borders, location)
             real_trajectory[index_of_states, :] = location
         return real_trajectory
 
@@ -45,7 +45,7 @@ class RealLocationTranslator:
         x_value = gt1.sample_from_interval(west, east)
         y_value = gt1.sample_from_interval(south, north)
         location = np.array([x_value, y_value])
-        print(west, east, south, north, location)
+        # print(west, east, south, north, location)
         return location
 
     def sample_with_direction(self, last_step, this_step, next_step, borders):

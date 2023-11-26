@@ -25,7 +25,7 @@ class DataWriter:
                 for j in range(tr.shape[0]):
                     x = tr[j, 0]
                     y = tr[j, 1]
-                    file_object.write('%.2f' % x + ',' + '%.2f' % y + ';')
+                    file_object.write('%.6f' % x + ',' + '%.6f' % y + ';')
                 file_object.write('\n')
         file_object.close()
 

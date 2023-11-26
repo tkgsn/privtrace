@@ -8,13 +8,13 @@ class StateGeneration:
     def __init__(self, cc: ParameterCarrier):
         self.cc = cc
 
-    def generate_tra(self, mar_mo):
+    def generate_tra(self, mar_mo, neighbor_check=False):
         cc1 = self.cc
         generator1 = Generator(self.cc)
         generator1.load_generator(mar_mo)
         number = cc1.trajectory_number_to_generate
-        print(number)
-        usable_tr_list = generator1.generate_many(number, neighbor_check=False)
+        print(f"generate {number} trajectories by neighbor_check={neighbor_check}")
+        usable_tr_list = generator1.generate_many(number, neighbor_check=neighbor_check)
         print('state trajectories got')
         real_tr_list = self.trans_many_usable_trajectories(usable_tr_list, mar_mo.grid)
         return real_tr_list

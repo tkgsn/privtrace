@@ -9,12 +9,16 @@ class Noise:
     # this function add laplace noise to some data, real data is object_array. Sensitivity of
     # laplace mechanism is sensitivity1 and privacy budget is epsilon1.
     def add_laplace(self, object_array, epsilon1, sensitivity1, if_regularize=True):
-        lambda1 = sensitivity1 / epsilon1
-        shape1 = object_array.shape
-        noisy_object = object_array + np.random.laplace(scale=lambda1, size=shape1)
-        if if_regularize:
-            noisy_object = self.positive_regulation(noisy_object)
-        return noisy_object
+        # shun: we add the special vocab epsilon=0, which means no noise for test
+        if epsilon1 == 0:
+            return object_array
+        else:
+            lambda1 = sensitivity1 / epsilon1
+            shape1 = object_array.shape
+            noisy_object = object_array + np.random.laplace(scale=lambda1, size=shape1)
+            if if_regularize:
+                noisy_object = self.positive_regulation(noisy_object)
+            return noisy_object
 
     # this function change meaningless negative value to zero. These negative value comes from
     # noise adding and usually meaningless such as density. This function sum up all negative value

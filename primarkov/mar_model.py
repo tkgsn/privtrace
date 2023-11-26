@@ -46,7 +46,7 @@ class MarkovModel:
         subcell_number = grid.usable_state_number
         self.subcell_number = subcell_number
         self.start_state_index = subcell_number
-        self.end_state_index = subcell_number + 1
+        self.end_state_index = subcell_number + 1 
         self.all_state_number = subcell_number + 2
         self.grid = grid
 
@@ -58,7 +58,7 @@ class MarkovModel:
         trajectory_array = trajectory1.usable_simple_sequence
         markov_matrix = np.zeros((state_number, state_number))
         trajectory_length = trajectory_array.size
-        print("transition probability of ", trajectory_array)
+
         for markov_transform_start in range(trajectory_length - 1):
             this_step_start_state = trajectory_array[markov_transform_start]
             this_step_end_state = trajectory_array[markov_transform_start + 1]
@@ -84,10 +84,14 @@ class MarkovModel:
         print('begin calculating matrix')
         print(datetime.datetime.now())
         for trajectory1 in trajectory_list:
+            # this is not working?? maybe always true
             not_out_of_usable = not trajectory1.has_not_usable_index
             if not_out_of_usable:
                 markov_matrix1 = self.trajectory_markov_probability(trajectory1)
                 markov_matrix += markov_matrix1
+            else:
+                # this can't happen
+                raise
         print('calculating ends')
         print(datetime.datetime.now())
         self.real_markov_matrix = markov_matrix
@@ -166,7 +170,7 @@ class MarkovModel:
                     state_next = sequence[next_step_index]
                 if_sensitive = self.guidepost_indicator[state_now]
                 if if_sensitive:
-                    print("this state", state_now)
+                    # print("this state", state_now)
                     guidepost_index = self.index_dict[state_now]
                     guidepost1 = self.guidepost_set[guidepost_index]
                     guidepost1.guidepost_add(state_previous, state_next, trajectory_length)
@@ -198,10 +202,14 @@ class MarkovModel:
 
     #
     def order1_and_2_end_consistency(self):
+        # whats this?
         for gp in self.guidepost_set:
             index_of_gp = gp.this_state
             order1_end_value = self.noisy_markov_matrix[index_of_gp, -1]
             order2_end_value = gp.give_total_ends_value()
+            if order2_end_value == 0:
+                print("order2_end_value is zero")
+                print(order1_end_value / order2_end_value * 1.5)
             gp.multiply_ends(order1_end_value / order2_end_value * 1.5)
 
     #
@@ -213,11 +221,11 @@ class MarkovModel:
         optimized_distribution = sec1.distribution_calibration(self.grid, self.noisy_markov_matrix, self.large_trans_indicator)
         inner_start_index_to_usable = sec1.non_zero_start_indices
         inner_end_index_to_usable = sec1.non_zero_end_indices
-        print(optimized_distribution)
+        # print(optimized_distribution)
         optimized_start_distribution = np.sum(optimized_distribution, axis=1)
         optimized_end_distribution = np.sum(optimized_distribution, axis=0)
         self.noisy_markov_matrix[-2, inner_start_index_to_usable] = optimized_start_distribution
-        print("a", optimized_start_distribution)
+        # print("a", optimized_start_distribution)
         self.noisy_markov_matrix[inner_end_index_to_usable, -1] = self.noisy_markov_matrix[inner_end_index_to_usable, -1] * 1.3
         self.optimized_start_end_distribution = np.zeros(
             (self.grid.usable_state_number, self.grid.usable_state_number))

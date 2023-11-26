@@ -58,8 +58,11 @@ class GeneralTools:
     # this function gives result of digitize of a 2-dimensional array by two bins. it is how a point is digitized.
     # be careful, the result is y and x, not x and y
     def get_points_bin_index(self, point_array: np.ndarray, x_bin: np.ndarray, y_bin: np.ndarray) -> np.ndarray:
-        x_result = self.get_bin_index(point_array[:, 0], x_bin)
-        y_result = self.get_bin_index(point_array[:, 1], y_bin)
+        # x_result = self.get_bin_index(point_array[:, 0], x_bin)
+        # y_result = self.get_bin_index(point_array[:, 1], y_bin)
+        # revising this so that point_array is a sequence of (lat,lon)
+        x_result = self.get_bin_index(point_array[:, 1], x_bin)
+        y_result = self.get_bin_index(point_array[:, 0], y_bin)
         column_result = np.reshape(x_result, (-1, 1))
         row_result = np.reshape(y_result, (-1, 1))
         combine_result = np.concatenate((row_result, column_result), axis=1)
