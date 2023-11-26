@@ -14,7 +14,7 @@ from discretization.get_discretization import DisData
 from primarkov.build_markov_model import ModelBuilder
 import privtrace_generator
 
-sys.path.append("../priv_traj_gen")
+sys.path.append("../../")
 from my_utils import load
 from dataset import TrajectoryDataset
 import evaluation

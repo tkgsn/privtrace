@@ -13,7 +13,9 @@
 
 #!/bin/bash
 
-cd ../priv_traj_gen
+# cd ../priv_traj_gen
+
+pip3 install cvxpy
 
 dataset=geolife_mm
 max_size=0
@@ -34,12 +36,12 @@ training_data_name=${location_threshold}_${time_threshold}_bin${n_bins}_seed${se
 
 # python3 data_pre_processing.py --latlon_config  $latlon_config --dataset $dataset --data_name $data_name --location_threshold $location_threshold --time_threshold $time_threshold --save_name $route_data_name --n_bins $n_bins $option --seed $seed_for_dataset
 
-cd ../privtrace
+# cd ../privtrace
 
 total_epsilon=1
 # save_name=privtrace_seed${seed_for_dataset}_eps$total_epsilon
 save_name=200_30_bin30_seed0
-dataset_config_path=../priv_traj_gen/config.json
+dataset_config_path=../../config.json
 python3 make_training_data.py --dataset $dataset --data_name $data_name --save_name $save_name --dataset_config $dataset_config_path --dataset_seed $seed_for_dataset
 n_bins=30
 python3 privtrace_generator.py --dataset $dataset --data_name $data_name --training_data_name $save_name --dataset_config_path $dataset_config_path --n_bins $n_bins --total_epsilon $total_epsilon

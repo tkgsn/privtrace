@@ -6,7 +6,7 @@ import json
 import sys
 
 
-sys.path.append("../priv_traj_gen")
+sys.path.append("../../")
 from my_utils import get_original_dataset_name
 
 class ParSetter:
@@ -19,7 +19,7 @@ class ParSetter:
         parser.add_argument('--dataset', type=str, default="chengdu")
         parser.add_argument('--data_name', type=str, default="10000")
         parser.add_argument('--training_data_name', type=str, default="privtrace")
-        parser.add_argument('--dataset_config_path', type=str, default="../priv_traj_gen/dataset_configs/chengdu.json")
+        parser.add_argument('--dataset_config_path', type=str, default="../../config.json")
         parser.add_argument('--subdividing_inner_parameter', type=float, default=200)
         parser.add_argument('--total_epsilon', type=float, default=1)
         # regularly, partition solution is suggested to be np.array([0.2, 0.52, 0.28]))

@@ -19,7 +19,7 @@ import argparse
 import pathlib
 
 import sys
-sys.path.append("../priv_traj_gen")
+sys.path.append("../../")
 from my_utils import load, get_original_dataset_name
 from grid import Grid
 from data_pre_processing import check_in_range

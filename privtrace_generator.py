@@ -12,7 +12,7 @@ from primarkov.build_markov_model import ModelBuilder
 import privtrace_generator
 
 import sys
-sys.path.append("../priv_traj_gen")
+sys.path.append("../../")
 from grid import Grid
 
 class PrivTraceGenerator():
